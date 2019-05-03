@@ -7,10 +7,10 @@ from gensim.models.doc2vec import Doc2Vec
 import codecs
 
 #model load
-model = Doc2Vec.load("/home/bluish02-lab-linux/repository/sentence_vector/models/test3/s2v_1_8_400_800")
+model = Doc2Vec.load("models/deeptask_Sentence2vector_1_8_100_400")
 
 # ndarray extract
-data = model.docvecs.doctag_syn0
+#data = model.docvecs.doctag_syn0
 
 
 
@@ -22,7 +22,7 @@ data = np.load('tsne_result.npy')
 
 # find clustering using K-means algorithm
 Sum_of_squared_distances = []
-K = range(1,200)
+K = range(1,20)
 
 for k in K:
     km = KMeans(n_clusters=k)

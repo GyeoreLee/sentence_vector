@@ -22,18 +22,17 @@ rc('font', family=font_name)
 # Data loading to train
 
 dialog_train_data =[]
-with open ('../../data/train_data', 'rb') as fp:
-    dialog_train_data = pickle.load(fp)
+with open ('../../data/train_data_new_preprocessing_multi_answer', 'rb') as fp:
+    dialog_train_data = pickle.load(fp)[0]
 
 # 입력 포맷 변경
 Dataset = []
-for i, data in enumerate(dialog_train_data[0]):
+for i, data in enumerate(dialog_train_data):
     Dataset.append(TaggedDocument(data[0],[str(data[1])]))
 
 # training parameter setting
 max_epochs = 100
 vec_size = 400
-
 alpha = 0.025
 
 
@@ -45,54 +44,55 @@ model = Doc2Vec(alpha=alpha, min_alpha=0.0025, min_count=1, dm =1, workers=10)#v
 model.build_vocab(Dataset)
 
 #hyper parameter tunning
-max_epochs_list = [20,40,100, 200, 400]
-vec_size_list = [100,200,400]
-window_size_list = [5,8,11]
-#for method in [0, 1]:
+methods = [0]#,1]
+max_epochs_list = [200]#20,40,100, 200, 400,800,1600]
+vec_size_list = [100]#,200,400,600,800]
+window_size_list = [5]#,8,11]
+
 
 # Adjust hyperparameter
-for window_size in window_size_list:
-    for vec_size in vec_size_list:
-        for max_epoch in max_epochs_list:
+for method in methods:
+    for window_size in window_size_list:
+        for vec_size in vec_size_list:
+            for max_epoch in max_epochs_list:
 
-            #load current training model
-            '''
-            if fname:
-                path = 'models'
-                files = os.listdir(pah)
-                for file_name in files:
-                    if file_name
-                    prev_tmp_file = get_tmpfile(fname)
-                fname.split('_')
-                fname[0]
-            '''
-
-            print('Method %d Window_size %d  vec_size %d Max_epoch %d - epoch %d' %
-                  (model.dm.__bool__(),window_size ,vec_size, max_epoch, max_epoch))
-
-            # training setting change (Hyper-Parameter)
-            model.window = window_size
-            model.vector_size = vec_size
-            model = Doc2Vec(Dataset, window=window_size, vector_size=vec_size,  alpha=alpha, min_alpha=0.0025, min_count=2, dm=1,\
-                            workers=12,epochs=max_epoch)  # vector_size=5, window=2, min_count=1, workers=4)
-
-            # training
-            #model.train(Dataset, total_examples=model.corpus_count, epochs=model.iter)
-
-            # decrease the learning rate
-            #model.alpha -= 0.0002
-            # fix the learning rate, no decay
-            #model.min_alpha = model.alpha
+                #load current training model
+                '''
+                if fname:
+                    path = 'models'
+                    files = os.listdir(pah)
+                    for file_name in files:
+                        if file_name
+                        prev_tmp_file = get_tmpfile(fname)
+                    fname.split('_')
+                    fname[0]
+                '''
 
 
-            # Persis a model to disk(file name+method+winSize+vecSize+Max_epoch)
-            fname = "models/deeptask_Sentence2vector_" \
-                                + str(int(model.dm.__bool__())) + '_'\
-                                + str(model.window)+'_'\
-                                + str(vec_size)+'_'\
-                                + str(max_epoch)
 
-            model.save(fname)
+                # training setting change (Hyper-Parameter)
+                model = Doc2Vec(Dataset, window=window_size, vector_size=vec_size,  alpha=alpha, min_alpha=0.0025, min_count=2, dm=method,\
+                                workers=12,epochs=max_epoch)
+
+                print('Method %d Window_size %d  vec_size %d Max_epoch %d' %
+                      (model.dm.__bool__(), window_size, vec_size, max_epoch))
+                # training
+                #model.train(Dataset, total_examples=model.corpus_count, epochs=model.iter)
+
+                # decrease the learning rate
+                #model.alpha -= 0.0002
+                # fix the learning rate, no decay
+                #model.min_alpha = model.alpha
+
+
+                # Persis a model to disk(file name+method+winSize+vecSize+Max_epoch)
+                fname = "../../models/new_preprocessing_multi_answer_deeptask_Sentence2vector_" \
+                                    + str(int(model.dm.__bool__())) + '_'\
+                                    + str(model.window)+'_'\
+                                    + str(vec_size)+'_'\
+                                    + str(max_epoch)
+
+                model.save(fname)
 
 
 

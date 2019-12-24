@@ -28,69 +28,84 @@ def column(matrix, i):
 
 
 #load pre-trained data(kor)
-pre_trained_model = gensim.models.Word2Vec.load('data/ko.bin')
+#pre_trained_model = gensim.models.Word2Vec.load('data/ko.bin')
 
 
 
 
 #load test data
 dialog_train_data =[]
-with open ('../../data/train_data', 'rb') as fp:
+with open ('../../data/train_data_group2_only', 'rb') as fp:
     dialog_train_data = pickle.load(fp)[0]
 
 
 
 #Analysis & inferrence
 #hyper parameter list
-max_epochs_list = [400]
-vec_size_list = [100,200]
-window_size_list = [8]
+methods = [0]#,1]
+max_epochs_list = [200]#20,40,100, 200, 400,800,1600]
+vec_size_list = [100]#,200,400,600,800]
+window_size_list = [5]#,8,11]
 
 test_cnt_list = []
-for window_size in window_size_list:
-    for vec_size in vec_size_list:
-        for max_epoch in max_epochs_list:
-            model = Doc2Vec.load("models/deeptask_Sentence2vector_"
-                                 + '1' + '_'
-                                 + str(window_size) + '_'
-                                 + str(vec_size) + '_'
-                                 + str(max_epoch)
-                                 )
-            #print('Max_epoch %d vec_size %d ' % (max_epoch, vec_size), model.most_similar(positive=['감사해요.'], topn=3))
-            print('Method %d Window_size %d  vec_size %d Max_epoch %d ' %
-                  (1, window_size, vec_size, max_epoch))
+for method in methods:
+    for window_size in window_size_list:
+        for vec_size in vec_size_list:
+            for max_epoch in max_epochs_list:
+                model = Doc2Vec.load("../../models/G2_deeptask_Sentence2vector_"
+                                     + str(method) + '_'
+                                     + str(window_size) + '_'
+                                     + str(vec_size) + '_'
+                                     + str(max_epoch)
+                                     )
 
-            cnt = 0
-            for test_string in random.sample(column(dialog_train_data,2),10):
+                # Top influence word print for Analysis
+                # label 별 통계 정보 표시
+                for label in sorted(model.docvecs.doctags):
+                    print(model.docvecs.doctags[label])
+                for label in sorted(model.docvecs.doctags):
+                    doc_vec = model.docvecs[label]
+                    print(label)
+                    print(model.most_similar([doc_vec],topn=20))
+                #print('Max_epoch %d vec_size %d ' % (max_epoch, vec_size), model.most_similar(positive=['감사해요.'], topn=3))
+                print('Method %d Window_size %d  vec_size %d Max_epoch %d ' %
+                      (method, window_size, vec_size, max_epoch))
 
-                inference_sentence = test_string
-                tagged_id = str([id for tokens ,id, string in dialog_train_data if string == inference_sentence][0])
-                tokens = [tokens for tokens, id, string in dialog_train_data if string == inference_sentence][0]
-                string = [string for tokens, id, string in dialog_train_data if string == inference_sentence][0]
-                infered_vector = model.infer_vector(tokens)
-                similarities = model.docvecs.most_similar([infered_vector],topn=len(model.docvecs))
-                rank = [category for category, similarity in similarities]
+                cnt = 0
+                unmatch_cnt = 0
+                for test_string in random.sample(column(dialog_train_data,2),dialog_train_data.__len__()):
+
+                    inference_sentence = test_string
+                    tagged_id = str([id for tokens ,id, string in dialog_train_data if string == inference_sentence][0])
+                    tokens = [tokens for tokens, id, string in dialog_train_data if string == inference_sentence][0]
+                    string = [string for tokens, id, string in dialog_train_data if string == inference_sentence][0]
+                    infered_vector = model.infer_vector(tokens)
+                    similarities = model.docvecs.most_similar([infered_vector],topn=len(model.docvecs))
+                    rank = [category for category, similarity in similarities]
 
 
-                if rank[0] == str(tagged_id):
-                    cnt += 1
-                    print(string, tagged_id, rank)
-            print(cnt)
-            test_cnt_list.append([window_size, vec_size, max_epoch,cnt])
-            
+                    if rank[0] == str(tagged_id):
+                        cnt += 1
+                        #print(string, tagged_id, rank)
+                    else:
+                        unmatch_cnt += 1
+                        print(string, tagged_id, rank[0])
+                print('total_len',dialog_train_data.__len__(),'cnt',cnt, 'unmatch_cnt',unmatch_cnt)
+                test_cnt_list.append([method, window_size, vec_size, max_epoch,cnt/dialog_train_data.__len__()])
 
 
 
-            #Infer word
 
-            for key in model.wv.vocab.keys():
-                if key.startswith('친구'):
-                    print(key)
-                    print(model.similar_by_word(key, topn=5))
+                #Infer word
 
-            print('\n')
+                for key in model.wv.vocab.keys():
+                    if key.startswith('친구'):
+                        print(key)
+                        print(model.similar_by_word(key, topn=5))
 
-print(sorted(test_cnt_list, key=lambda x:x[3]))
+                print('\n')
+for data in sorted(test_cnt_list, key=lambda x:x[4]):
+    print(data)
 
 
 #flatten_dialogs = [item for sublist in dialog_train_data for item in sublist[0]]
